@@ -289,6 +289,82 @@ qx.Class.define("qx.ui.table.columnmodel.Basic",
       return this.__columnDataArr[col].width;
     },
 
+    /**
+     * Show tooltips over column cells
+     * @param col {Integer} Column index
+     * @param showTooltip {Boolean} Show tooltip
+     */
+    setDataCellTooltipShow : function(col, showTooltip) {
+      if (qx.core.Environment.get("qx.debug")) {
+        this.assertInteger(col, "Invalid argument 'col'.");
+        this.assertBoolean(showTooltip, "Invalid argument 'show'.");
+        this.assertNotUndefined(this.__columnDataArr[col], "Column not found in table model");
+      }
+      this.__columnDataArr[col].showTooltip = showTooltip;
+    },
+
+    /**
+     * Returns the showTooltip column property value
+     * @param col {Integer} Column index
+     * @return {Boolean} showTooltip column property value
+     */
+    getDataCellTooltipShow : function(col) {
+      if (qx.core.Environment.get("qx.debug")) {
+        this.assertInteger(col, "Invalid argument 'col'.");
+        this.assertNotUndefined(this.__columnDataArr[col], "Column not found in table model");
+      }
+
+      return this.__columnDataArr[col].showTooltip || false;
+    },
+
+    /**
+     * Set column tooltip renderer function
+     * @param col {Integer} Column index
+     * @param tooltipRendererFunc {Function} Tooltip renderer function
+     */
+    setDataCellTooltipRendererFunc : function(col, tooltipRendererFunc) {
+      if (qx.core.Environment.get("qx.debug")) {
+        this.assertInteger(col, "Invalid argument 'col'.");
+        this.assertFunction(tooltipRendererFunc, "Invalid argument 'tooltipRendererFunc'.");
+        this.assertNotUndefined(this.__columnDataArr[col], "Column not found in table model");
+      }
+      this.__columnDataArr[col].tooltipRendererFunc = tooltipRendererFunc;
+      this.setDataCellTooltipShow(col, true);
+    },
+
+    /**
+     * Reset column tooltip renderer function
+     * @param col {Integer} Column index
+     * @param resetTooltipShow {Boolean} If true, showTooltip will be set to false. Default is true.
+     */
+    resetDataCellTooltipRendererFunc : function(col, resetTooltipShow) {
+      if (typeof resetTooltipShow === "undefined") {
+        resetTooltipShow = true;
+      }
+      if (qx.core.Environment.get("qx.debug")) {
+        this.assertInteger(col, "Invalid argument 'col'.");
+        this.assertBoolean(resetTooltipShow, "Invalid argument 'resetTooltipShow'.");
+        this.assertNotUndefined(this.__columnDataArr[col], "Column not found in table model");
+      }
+      this.__columnDataArr[col].tooltipRendererFunc = null;
+      if (resetTooltipShow) {
+        this.setDataCellTooltipShow(col, false);
+      }
+    },
+
+    /**
+     * Return column tooltip renderer function
+     * @param col {Integer} Column index
+     * @return {Function|null}
+     */
+    getDataCellTooltipRendererFunc : function(col) {
+      if (qx.core.Environment.get("qx.debug")) {
+        this.assertInteger(col, "Invalid argument 'col'.");
+        this.assertNotUndefined(this.__columnDataArr[col], "Column not found in table model");
+      }
+
+      return this.__columnDataArr[col].tooltipRendererFunc || null;
+    },
 
     /**
      * Sets the header renderer of a column.

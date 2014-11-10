@@ -85,6 +85,7 @@ qx.Class.define("qx.ui.table.pane.Scroller",
     this.__paneClipper.add(this.__tablePane);
     this.__paneClipper.addListener("mousewheel", this._onMousewheel, this);
     this.__paneClipper.addListener("mousemove", this._onMousemovePane, this);
+    this.__paneClipper.addListener("mouseout", this.__resetTooltip, this);
     this.__paneClipper.addListener("mousedown", this._onMousedownPane, this);
     this.__paneClipper.addListener("mouseup", this._onMouseupPane, this);
     this.__paneClipper.addListener("click", this._onClickPane, this);
@@ -851,6 +852,8 @@ qx.Class.define("qx.ui.table.pane.Scroller",
      */
     _onMousewheel : function(e)
     {
+      this.__resetTooltip();
+
       var table = this.getTable();
 
       if (!table.getEnabled()) {
@@ -1066,14 +1069,75 @@ qx.Class.define("qx.ui.table.pane.Scroller",
       this.__lastMousePageX = pageX;
       this.__lastMousePageY = pageY;
 
+      var col = this._getColumnForPageX(pageX)
       var row = this._getRowForPagePos(pageX, pageY);
-      if (row != null && this._getColumnForPageX(pageX) != null) {
+      if (row != null && col != null) {
         // The mouse is over the data -> update the focus
         if (this.getFocusCellOnMouseMove()) {
           this._focusCellAtPagePos(pageX, pageY);
         }
       }
       this.__header.setMouseOverColumn(null);
+
+      if (row != null && col != null) {
+        var tcm = table.getTableColumnModel();
+        var sharedTooltip = qx.ui.tooltip.Manager.getInstance().getSharedTooltip();
+        if (tcm.getDataCellTooltipShow(col)) {
+          if (this.__tooltipPos && this.__tooltipPos.col === col && this.__tooltipPos.row === row) {
+            return;
+          }
+          if (this.__tooltipTimeout) {
+            clearTimeout(this.__tooltipTimeout);
+            this.__tooltipTimeout = null;
+          }
+          this.__tooltipPos = {
+            col   : col,
+            row   : row
+          };
+          var tableModel = table.getTableModel();
+          var value = tableModel.getValue(col, row);
+
+          var renderer = tcm.getDataCellTooltipRendererFunc(col);
+          var label;
+          if (renderer) {
+            var cellInfo = {
+              col   : col,
+              row   : row,
+              value : value,
+              table : table
+            };
+            label = renderer(cellInfo);
+          } else {
+            label = value.toString();
+          }
+
+          if (!label) {
+            this.__resetTooltip();
+            return;
+          }
+          sharedTooltip.setLabel(label);
+          var show = function(){
+            this.__tooltipTimeout = null;
+            sharedTooltip.placeToMouse(e);
+            sharedTooltip.show();
+          };
+          sharedTooltip.hide();
+          this.__tooltipTimeout = setTimeout(show.bind(this), sharedTooltip.getShowTimeout());
+        } else if (this.__tooltipPos) {
+          this.__resetTooltip();
+        }
+      }
+    },
+
+    __resetTooltip : function() {
+      var sharedTooltip = qx.ui.tooltip.Manager.getInstance().getSharedTooltip();
+      if (this.__tooltipTimeout) {
+        clearTimeout(this.__tooltipTimeout);
+        this.__tooltipTimeout = null;
+      }
+      this.__tooltipPos = null;
+      sharedTooltip.hide();
+      sharedTooltip.setLabel("");
     },
 
 
@@ -1568,10 +1632,9 @@ qx.Class.define("qx.ui.table.pane.Scroller",
     {
       var pageX = e.getDocumentLeft();
       var pageY = e.getDocumentTop();
-      var col = this._getColumnForPageX(pageX);
 
-      if (col !== null) {
-        this._focusCellAtPagePos(pageX, pageY);
+
+      this._focusCellAtPagePos(pageX, pageY);
 
       /**
        * this._focusCellAtPagePos places focus indicator with a little delay (layout manager sets job into queue).
@@ -1584,10 +1647,9 @@ qx.Class.define("qx.ui.table.pane.Scroller",
        */
       setTimeout(this.startEditing.bind(this), 0);
 
-        var row = this._getRowForPagePos(pageX, pageY);
-        if (row != -1 && row != null) {
-          this.fireEvent("cellDblclick", qx.ui.table.pane.CellEvent, [this, e, row], true);
-        }
+      var row = this._getRowForPagePos(pageX, pageY);
+      if (row != -1 && row != null) {
+        this.fireEvent("cellDblclick", qx.ui.table.pane.CellEvent, [this, e, row], true);
       }
     },
 
