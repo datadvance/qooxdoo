@@ -54,10 +54,16 @@ qx.Class.define("qx.ui.table.pane.InlineTableEditorModalWindow", {
   },
 
   destruct : function() {
-    this.__documentRoot.removeListener("resize", this.__onDocumentRootResize, this);
-    this.__blocker.removeListener("click", this.__onBlockerClick, this);
+    if (this.__documentRoot) {
+      this.__documentRoot.removeListener("resize", this.__onDocumentRootResize, this);
+    }
+
+    if (this.__blocker) {
+      this.__blocker.removeListener("click", this.__onBlockerClick, this);
+      this.__blocker.exclude();
+    }
+
     delete this.__cellEditor;
-    this.__blocker.exclude();
     p7.Dispose.remove(this);
   },
 
