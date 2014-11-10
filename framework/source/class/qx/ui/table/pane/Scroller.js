@@ -1998,8 +1998,10 @@ qx.Class.define("qx.ui.table.pane.Scroller",
       }
 
       qx.event.Timer.once(function(){
-        this.__table.focus();
-        this.__table.activate();
+        if (this && this.__table && !this.__table.isDisposed()) {
+          this.__table.focus();
+          this.__table.activate();
+        }
       }, this, 0);
     },
 
@@ -2423,46 +2425,44 @@ qx.Class.define("qx.ui.table.pane.Scroller",
       /**
        * Render cell HTML code one more time and put it onto focus indicator with selection enabled
        */
-      if (typeof this.__focusedCol !== "undefined"
+      var updateFocusIndicatorContent = function(){
+        if (typeof this.__focusedCol !== "undefined"
           && this.__focusedCol !== null
           && typeof this.__focusedCol !== "undefined"
           && this.__focusedRow !== null) {
 
-        var updateFocusIndicatorContent = function(){
-          var selectionModel = table.getSelectionModel();
-          var tableModel = table.getTableModel();
-          var rowHeight = table.getRowHeight();
-          var columnModel = table.getTableColumnModel();
-          var cellWidth = columnModel.getColumnWidth(this.__focusedCol);
+            var selectionModel = table.getSelectionModel();
+            var tableModel = table.getTableModel();
+            var rowHeight = table.getRowHeight();
+            var columnModel = table.getTableColumnModel();
+            var cellWidth = columnModel.getColumnWidth(this.__focusedCol);
+            var selected = selectionModel.isSelectedIndex(this.__focusedRow);
+            var cellRenderer = table.getTableColumnModel().getDataCellRenderer(this.__focusedCol);
 
-          var selected = selectionModel.isSelectedIndex(this.__focusedRow);
-          var cellRenderer = table.getTableColumnModel().getDataCellRenderer(this.__focusedCol);
+            var cellInfo = { table : table };
+            cellInfo.styleHeight = rowHeight;
+            cellInfo.row = this.__focusedRow;
+            cellInfo.selected = selected;
+            cellInfo.focusedRow = true;
+            cellInfo.rowData = tableModel.getRowData(this.__focusedRow);
+            cellInfo.value = tableModel.getValue(this.__focusedCol, this.__focusedRow);
+            cellInfo.style = cellRenderer.getDefaultCellStyle() ? cellRenderer.getDefaultCellStyle()+";-webkit-user-select: text;" : "-webkit-user-select: text;";
+            cellInfo.styleLeft = 0;
+            cellInfo.styleWidth = cellWidth;
 
-          var cellInfo = { table : table };
-          cellInfo.styleHeight = rowHeight;
-          cellInfo.row = this.__focusedRow;
-          cellInfo.selected = selected;
-          cellInfo.focusedRow = true;
-          cellInfo.rowData = tableModel.getRowData(this.__focusedRow);
-          cellInfo.value = tableModel.getValue(this.__focusedCol, this.__focusedRow);
-          cellInfo.style = cellRenderer.getDefaultCellStyle() ? cellRenderer.getDefaultCellStyle()+";-webkit-user-select: text;" : "-webkit-user-select: text;";
-          cellInfo.styleLeft = 0;
-          cellInfo.styleWidth = cellWidth;
-
-          var rowRenderer = table.getDataRowRenderer();
-          var rowStyle = rowRenderer.createRowStyle(cellInfo);
-          var htmlArr = [];
-          cellRenderer.createDataCellHtml(cellInfo, htmlArr);
-          var html = _.sprintf('<div style="padding-left: 6px; padding-right: 6px;%s">%s</div>', rowStyle, htmlArr.join(""));
-          this.__embed = new qx.ui.embed.Html(html);
-          this.__focusIndicator.add(this.__embed);
-        };
-
-        /**
-         * We need to update focus indicator content after (!) hover/selection change/etc handlers complete
-         */
-        setTimeout(updateFocusIndicatorContent.bind(this), 0);
-      }
+            var rowRenderer = table.getDataRowRenderer();
+            var rowStyle = rowRenderer.createRowStyle(cellInfo);
+            var htmlArr = [];
+            cellRenderer.createDataCellHtml(cellInfo, htmlArr);
+            var html = _.sprintf('<div style="padding-left: 6px; padding-right: 6px;%s">%s</div>', rowStyle, htmlArr.join(""));
+            this.__embed = new qx.ui.embed.Html(html);
+            this.__focusIndicator.add(this.__embed);
+        }
+      };
+      /**
+       * We need to update focus indicator content after (!) hover/selection change/etc handlers complete
+       */
+      setTimeout(updateFocusIndicatorContent.bind(this), 0);
     }
   },
 
