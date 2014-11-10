@@ -1884,43 +1884,37 @@ qx.Class.define("qx.ui.table.pane.Scroller",
         }
         else
         {
-          // The cell editor is a traditional in-place editor.
-          var size = this.__focusIndicator.getInnerSize();
-          this.__cellEditor.setUserBounds(0, 0, size.width, size.height);
+          var fiContentLocation = this.__focusIndicator.getContentLocation();
+          var fiInsets = this.__focusIndicator.getInsets();
 
-          // prevent click event from bubbling up to the table
-          this.__focusIndicator.addListener("mousedown", function(e)
-          {
-            this.__lastMouseDownCell = {
-              row : this.__focusedRow,
-              col : this.__focusedCol
-            };
-            e.stopPropagation();
-          }, this);
+          var bounds = {
+            height : fiContentLocation.bottom - fiContentLocation.top - fiInsets.bottom - fiInsets.top,
+            width : fiContentLocation.right - fiContentLocation.left - fiInsets.right - fiInsets.left,
+            left : fiContentLocation.left + fiInsets.left,
+            top : fiContentLocation.top + fiInsets.top
+          };
 
-          this.__focusIndicator.add(this.__cellEditor);
-          this.__focusIndicator.addState("editing");
-          this.__focusIndicator.setKeepActive(false);
+          this.__modalInlineWindow = new qx.ui.table.pane.InlineTableEditorModalWindow(bounds, this.__cellEditor);
 
-          // Make the focus indicator visible during editing
-          this.__focusIndicator.setDecorator("table-scroller-focus-indicator");
-
-          this.__cellEditor.focus();
-          this.__cellEditor.activate();
+          this.__modalInlineWindow.addListener("stopEditing", this.stopEditing, this);
+          this.__modalInlineWindow.addListener("cancelEditing", this.cancelEditing, this);
+          this.__modalInlineWindow.show();
         }
-
         return true;
       }
 
       return false;
     },
 
-
     /**
      * Stops editing and writes the editor's value to the model.
      */
     stopEditing : function()
     {
+      if (this.__cellEditor && typeof this.__cellEditor.validate === "function" && !this.__cellEditor.validate()) {
+        return;
+      }
+
       // If the focus indicator is not being shown normally...
       if (! this.getShowCellFocusIndicator())
       {
@@ -1943,8 +1937,6 @@ qx.Class.define("qx.ui.table.pane.Scroller",
         var value = this.__cellEditorFactory.getCellEditorValue(this.__cellEditor);
         var oldValue = this.getTable().getTableModel().getValue(this.__focusedCol, this.__focusedRow);
         this.getTable().getTableModel().setValue(this.__focusedCol, this.__focusedRow, value);
-
-        this.__table.focus();
 
         // Fire an event containing the value change.
         this.__table.fireDataEvent("dataEdited",
@@ -1979,8 +1971,18 @@ qx.Class.define("qx.ui.table.pane.Scroller",
           this.__cellEditor.destroy();
           this.__cellEditor = null;
           this.__cellEditorFactory = null;
+
+          this.__modalInlineWindow.removeListener("stopEditing", this.stopEditing, this);
+          this.__modalInlineWindow.removeListener("cancelEditing", this.cancelEditing, this);
+          this.__modalInlineWindow.destroy();
+          this.__modalInlineWindow = null;
         }
       }
+
+      qx.event.Timer.once(function(){
+        this.__table.focus();
+        this.__table.activate();
+      }, this, 0);
     },
 
 
