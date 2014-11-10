@@ -444,7 +444,9 @@ qx.Class.define("qx.ui.table.pane.Scroller",
           control = new qx.ui.table.pane.FocusIndicator(this);
           control.setUserBounds(0, 0, 0, 0);
           control.setZIndex(1000);
+          control.setLayout(new qx.ui.layout.Grow);
           control.addListener("mouseup", this._onMouseupFocusIndicator, this);
+
           this.__paneClipper.add(control);
           control.show();             // must be active for editor to operate
           control.setDecorator(null); // it can be initially invisible, though.
@@ -654,6 +656,10 @@ qx.Class.define("qx.ui.table.pane.Scroller",
         }
         this.__lastRowCount = rowCount;
       }
+      /**
+       * In some cases data changed under focus indicator. We need to update focus indicator content in this situation
+       */
+      this._updateFocusIndicator();
     },
 
 
@@ -2401,10 +2407,64 @@ qx.Class.define("qx.ui.table.pane.Scroller",
       }
 
       this.__focusIndicator.moveToCell(this.__focusedCol, this.__focusedRow);
+
+      this.__focusIndicator.removeAll();
+      if (this.__embed) {
+        this.__embed.dispose();
+        this.__embed = null;
+      }
+      /**
+       * If focus indicator is invisible selection disabled
+       */
+      if (this.__focusIndicator.getDecorator() === null) {
+        return;
+      }
+
+      /**
+       * Render cell HTML code one more time and put it onto focus indicator with selection enabled
+       */
+      if (typeof this.__focusedCol !== "undefined"
+          && this.__focusedCol !== null
+          && typeof this.__focusedCol !== "undefined"
+          && this.__focusedRow !== null) {
+
+        var updateFocusIndicatorContent = function(){
+          var selectionModel = table.getSelectionModel();
+          var tableModel = table.getTableModel();
+          var rowHeight = table.getRowHeight();
+          var columnModel = table.getTableColumnModel();
+          var cellWidth = columnModel.getColumnWidth(this.__focusedCol);
+
+          var selected = selectionModel.isSelectedIndex(this.__focusedRow);
+          var cellRenderer = table.getTableColumnModel().getDataCellRenderer(this.__focusedCol);
+
+          var cellInfo = { table : table };
+          cellInfo.styleHeight = rowHeight;
+          cellInfo.row = this.__focusedRow;
+          cellInfo.selected = selected;
+          cellInfo.focusedRow = true;
+          cellInfo.rowData = tableModel.getRowData(this.__focusedRow);
+          cellInfo.value = tableModel.getValue(this.__focusedCol, this.__focusedRow);
+          cellInfo.style = cellRenderer.getDefaultCellStyle() ? cellRenderer.getDefaultCellStyle()+";-webkit-user-select: text;" : "-webkit-user-select: text;";
+          cellInfo.styleLeft = 0;
+          cellInfo.styleWidth = cellWidth;
+
+          var rowRenderer = table.getDataRowRenderer();
+          var rowStyle = rowRenderer.createRowStyle(cellInfo);
+          var htmlArr = [];
+          cellRenderer.createDataCellHtml(cellInfo, htmlArr);
+          var html = _.sprintf('<div style="padding-left: 6px; padding-right: 6px;%s">%s</div>', rowStyle, htmlArr.join(""));
+          this.__embed = new qx.ui.embed.Html(html);
+          this.__focusIndicator.add(this.__embed);
+        };
+
+        /**
+         * We need to update focus indicator content after (!) hover/selection change/etc handlers complete
+         */
+        setTimeout(updateFocusIndicatorContent.bind(this), 0);
+      }
     }
   },
-
-
 
 
   /*
