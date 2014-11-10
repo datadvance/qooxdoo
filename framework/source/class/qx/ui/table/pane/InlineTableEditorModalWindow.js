@@ -42,6 +42,11 @@ qx.Class.define("qx.ui.table.pane.InlineTableEditorModalWindow", {
       contentPadding : 0,
       layout : p7.Dispose.add(this, new qx.ui.layout.Canvas)
     });
+    this.setLayoutProperties({
+      left : this.__bounds.left,
+      top : this.__bounds.top
+    });
+
     this.add(this.__cellEditor, {top: 0, right: 0, bottom: 0, left: 0});
 
     this.addListenerOnce("appear", this.__onWindowFirstAppear, this);
@@ -81,8 +86,6 @@ qx.Class.define("qx.ui.table.pane.InlineTableEditorModalWindow", {
      * Window "appear" event handler. Used for init window position, custom blocker zIndex. Activate cell editor
      */
     __onWindowFirstAppear : function() {
-      this.moveTo(this.__bounds.left, this.__bounds.top);
-
       this.__documentRoot = qx.core.Init.getApplication().getRoot();
       this.__blocker = p7.Dispose.add(this, new qx.html.Blocker(null, 1));
       this.__documentRoot.getContentElement().add(this.__blocker);
