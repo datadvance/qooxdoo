@@ -63,7 +63,6 @@ qx.Class.define("qx.ui.core.Blocker",
     if (qx.Class.isDefined("qx.ui.root.Abstract") &&
         widget instanceof qx.ui.root.Abstract) {
       this._isRoot = true;
-      this.setKeepBlockerActive(true);
     }
 
     // dynamic theme switch
