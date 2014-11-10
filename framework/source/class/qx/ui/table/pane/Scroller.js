@@ -1566,14 +1566,26 @@ qx.Class.define("qx.ui.table.pane.Scroller",
     {
       var pageX = e.getDocumentLeft();
       var pageY = e.getDocumentTop();
+      var col = this._getColumnForPageX(pageX);
 
+      if (col !== null) {
+        this._focusCellAtPagePos(pageX, pageY);
 
-      this._focusCellAtPagePos(pageX, pageY);
-      this.startEditing();
+      /**
+       * this._focusCellAtPagePos places focus indicator with a little delay (layout manager sets job into queue).
+       * Old conception places editor onto focus indicator, and editor always moves with focus indicator.
+       * New conception places editor (modal window) above focus indicator and after focus indicator moves
+       * editor still placed above old focus indicator position.
+       *
+       * We need to wait layout manager process this._focusCellAtPagePos and start editing after this.
+       * Because editor (modal window) reads focus indicator position and bounds to place itself.
+       */
+      setTimeout(this.startEditing.bind(this), 0);
 
-      var row = this._getRowForPagePos(pageX, pageY);
-      if (row != -1 && row != null) {
-        this.fireEvent("cellDblclick", qx.ui.table.pane.CellEvent, [this, e, row], true);
+        var row = this._getRowForPagePos(pageX, pageY);
+        if (row != -1 && row != null) {
+          this.fireEvent("cellDblclick", qx.ui.table.pane.CellEvent, [this, e, row], true);
+        }
       }
     },
 
