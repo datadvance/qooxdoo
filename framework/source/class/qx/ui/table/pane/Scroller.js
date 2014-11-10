@@ -656,10 +656,6 @@ qx.Class.define("qx.ui.table.pane.Scroller",
         }
         this.__lastRowCount = rowCount;
       }
-      /**
-       * In some cases data changed under focus indicator. We need to update focus indicator content in this situation
-       */
-      this._updateFocusIndicator();
     },
 
 
