@@ -1990,10 +1990,12 @@ qx.Class.define("qx.ui.table.pane.Scroller",
           this.__cellEditor = null;
           this.__cellEditorFactory = null;
 
-          this.__modalInlineWindow.removeListener("stopEditing", this.stopEditing, this);
-          this.__modalInlineWindow.removeListener("cancelEditing", this.cancelEditing, this);
-          this.__modalInlineWindow.destroy();
-          this.__modalInlineWindow = null;
+          if (this.__modalInlineWindow) {
+            this.__modalInlineWindow.removeListener("stopEditing", this.stopEditing, this);
+            this.__modalInlineWindow.removeListener("cancelEditing", this.cancelEditing, this);
+            this.__modalInlineWindow.destroy();
+            this.__modalInlineWindow = null;
+          }
         }
       }
 
