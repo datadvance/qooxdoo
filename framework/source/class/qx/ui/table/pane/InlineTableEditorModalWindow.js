@@ -92,9 +92,14 @@ qx.Class.define("qx.ui.table.pane.InlineTableEditorModalWindow", {
 
       this.__documentRoot.addListener("resize", this.__onDocumentRootResize, this);
       this.__blocker.addListener("click", this.__onBlockerClick, this);
+      this.__blocker.addListener("keypress", this.__onBlockerKeypress, this);
 
       this.__cellEditor.focus();
       this.__cellEditor.activate();
+    },
+
+    __onBlockerKeypress : function(event) {
+      return this.__onCellEditorKeypress(event);
     },
 
     /**
