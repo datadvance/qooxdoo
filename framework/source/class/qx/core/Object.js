@@ -422,7 +422,13 @@ qx.Class.define("qx.core.Object",
         qx.event.Registration.deleteAllListeners(this);
       }
     }
-
+    // Kludge - cleanup evil static queues
+    if (typeof qx.Class.getByName("qx.ui.core.queue.Visibility") !== "undefined") {
+      qx.ui.core.queue.Visibility.remove(this);
+    }
+    if (typeof qx.Class.getByName("qx.html.Element") !== "undefined") {
+      delete qx.html.Element._modified[this.$$hash];
+    }
     // Cleanup object registry
     qx.core.ObjectRegistry.unregister(this);
 
